@@ -13,7 +13,7 @@
 - [ ]	Sistema de puntuación
 - [ ]	Diseño de jugador
 
-##UI
-###Posibles fuentes
+## UI
+### Posibles fuentes
 * https://fonts.google.com/specimen/Bungee?preview.text=The%20aviator&preview.text_type=custom
 * 
