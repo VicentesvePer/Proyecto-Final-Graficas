@@ -16,4 +16,5 @@
 ## UI
 ### Posibles fuentes
 * https://fonts.google.com/specimen/Bungee?preview.text=The%20aviator&preview.text_type=custom
-* 
+* https://fonts.google.com/specimen/Palette+Mosaic?preview.text=THE%20AVIATOR&preview.text_type=custom
+* https://fonts.google.com/specimen/Press+Start+2P?query=star&preview.text=THE%20AVIATOR&preview.text_type=custom
