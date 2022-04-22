@@ -13,6 +13,10 @@
 - [ ]	Sistema de puntuación
 - [ ]	Diseño de jugador
 
+- [] UI
+- [] Escena Base
+- [] Texturas, Audio y assets power ups
+
 ## UI
 ### Posibles fuentes
 * https://fonts.google.com/specimen/Bungee?preview.text=The%20aviator&preview.text_type=custom

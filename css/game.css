@@ -1,0 +1,53 @@
+@charset "UTF-8";
+
+* {
+    font-family: Arial;
+    font-family: 'Press Start 2P', cursive;
+	color: rgb(252, 252, 252);
+}
+
+body {
+	color:rgb(10, 0, 0);
+    background-color:#000000;
+    
+    
+}
+
+#container {
+	position:absolute;
+}
+
+#webglcanvas {
+	border:none;
+	
+}
+
+.title {
+    font-size:45px;
+
+}
+
+.divTitle {
+    text-align: center;
+    margin-top: 80px;
+}
+
+.divStart {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80%;
+    
+}
+
+.clickStart {
+    cursor: pointer;
+    
+}
+
+.clickStart:hover {
+    text-decoration: underline;
+
+    
+}
+

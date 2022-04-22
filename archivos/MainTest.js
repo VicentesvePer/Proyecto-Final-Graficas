@@ -17,7 +17,7 @@ let currentTime = Date.now();
 
 let directionalLight = null, spotLight = null, ambientLight = null;
 
-let mapUrl = "../images/checker_large.gif";
+let mapUrl = "../assets/Space.jpg";
 
 let SHADOW_MAP_WIDTH = 1024, SHADOW_MAP_HEIGHT = 1024;
 
