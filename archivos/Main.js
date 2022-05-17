@@ -6,20 +6,18 @@
 "use strict"; 
 
 import * as THREE from '../libs/three.js/three.module.js'
-import { OrbitControls } from '../libs/three.js/controls/OrbitControls.js';
 import { OBJLoader } from '../libs/three.js/loaders/OBJLoader.js';
 import { MTLLoader } from '../libs/three.js/loaders/MTLLoader.js';
-import { PointerLockControls } from "../libs/three.js/controls/PointerLockControls.js";
 
 const blocker = document.getElementById('blocker');
 const btnInstructions = document.getElementById('instructions');
 
-let renderer = null, scene = null, camera = null, group = null, objectList = [], orbitControls = null;
-
+let renderer = null, scene = null, camera = null, group = null, objectList = []
+let mouse = new THREE.Vector2()
 let duration = 20000; // ms
 let currentTime = Date.now();
 
-let directionalLight = null, spotLight = null, ambientLight = null;
+let spotLight = null, ambientLight = null;
 
 let mapUrl = "../assets/Space.jpg";
 
@@ -104,16 +102,27 @@ async function loadObjMtl(objModelUrl, objectList, position, scale, rotation)
 }
 
 
-
+let flag = 1;
 function animate() 
 {
     let now = Date.now();
     let deltat = now - currentTime;
     currentTime = now;
     let fract = deltat / duration;
+    
+    
    
     try{
         objectList[1].rotation.z += 0.005
+        objectList[2].rotation.x += fract*flag*2
+        objectList[2].position.y = mouse.y*6 + 8
+        objectList[2].rotation.z = mouse.y*0.15
+        if(objectList[2].rotation.x > 0.25){
+            flag = -1;
+        };
+        if(objectList[2].rotation.x < -0.25){
+            flag = 1;
+        };
 
     }catch(e){
         console.log("IGNORE",e)
@@ -132,6 +141,14 @@ function update()
     animate();
 
     // Update the camera controller
+
+}
+
+function onDocumentPointerMove( event ) 
+{
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    console.log(mouse.y)
 
 }
 
@@ -205,6 +222,8 @@ function createScene(canvas)
     mesh.castShadow = false;
     mesh.receiveShadow = true;
     group.add( mesh );
+
+    document.addEventListener('pointermove', onDocumentPointerMove);
 
     //initPointerLock();
     
