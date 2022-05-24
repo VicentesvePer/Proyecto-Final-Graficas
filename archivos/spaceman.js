@@ -86,7 +86,7 @@ function createLights() {
 async function createEarth() {
   // Create a group to hold object earth
   earthGroup = new THREE.Object3D();
-  earthGroup.position.set(0, -7, 20);
+  earthGroup.position.set(0, -7, -30);
   objEarth = await loadObjMtl(
     objModelEarth,
     [0, 0, 0],
@@ -116,7 +116,7 @@ async function createShip() {
 // Function to create the Asteroid
 async function createAsteroid() {
   asteroidsGroup = new THREE.Object3D();
-  asteroidsGroup.position.set(0, -7, 20);
+  asteroidsGroup.position.set(0, -7, -30);
 
   // radius: Entre 11 y 14.5
   let x = 0,
@@ -125,7 +125,7 @@ async function createAsteroid() {
   let PX = 0;
   let PY = -7;
 
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 10; i++) {
     let radius = genRand(11, 14.5, 2);
     let angle = Math.random() * Math.PI * 2;
     x = Math.cos(angle) * radius;
@@ -171,26 +171,41 @@ let t = 0;
 function rotateAsteroids(angle) {
   let PX = 0;
   let PY = -7;
-  asteroidsGroup.rotation.z += angle;
+  asteroidsGroup.rotation.z += angle*5;
 
-  if (game_status) {
-    for (let i = 0; i < listAsteroid.length; i++) {
-      if (objAsteroid !== null) {
-        t += 0.01;
-        objAsteroid.position.x = 15 * Math.cos(t) + 0;
-        objAsteroid.position.y = 15 * Math.sin(t) + 0; // These to strings make it work
-      }
-      console.log(listAsteroid[i].position.y);
+  const coneWorldPosition = new THREE.Vector3();
+  asteroidsGroup.updateMatrixWorld();
+  for (let i = 0; i < listAsteroid.length; i++) {
+    listAsteroid[i].getWorldPosition(coneWorldPosition)
+    // console.log("Asteroide position", coneWorldPosition.y);
+  
+  // console.log(asteroidsGroup.children[0].position);
+  // if (game_status) {
+  //   for (let i = 0; i < listAsteroid.length; i++) {
+  //     // if (listAsteroid[i] !== null) {
+  //     //   t += 0.01;
+  //     //   let radius = genRand(11, 14.5, 2);
+  //     //   // listAsteroid[i].position.x += angle*5 * Math.cos(t) + 0;
+  //     //   listAsteroid[i].position.x = Math.cos(angle) * 11;
+  //     //   listAsteroid[i].position.y += angle*50 * Math.sin(t) + 0; // These to strings make it work
+  //     // }
+  //     // console.log(listAsteroid[i].position.y);
 
-      // 1st quadrant & // 2nd quadrant
-      /* if (
-        (PX > listAsteroid[i].position.x && PY >= listAsteroid[i].position.y) ||
-        (PX <= listAsteroid[i].position.x && PY > listAsteroid[i].position.y)
+  //     // 1st quadrant & // 2nd quadrant
+      if (
+        (PX > coneWorldPosition.x && PY >= coneWorldPosition.y)
       ) {
+        let radius = genRand(11, 14.5, 2);
+        let angle = Math.random() * Math.PI;
+        // let angle = Math.PI * 2;
+        let x = Math.cos(angle) * radius;
+        let y = Math.sin(angle) * radius;
+        listAsteroid[i].position.set(x, y)
         console.log("hola");
-      } */
+      }
     }
-  }
+    // }
+  // }
 }
 
 //Function to load the object
