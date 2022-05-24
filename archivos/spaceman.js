@@ -58,7 +58,6 @@ function main() {
   createLights();
   createEarth();
   createShip();
-  createAsteroid();
   update();
 }
 
@@ -86,7 +85,7 @@ function createLights() {
 async function createEarth() {
   // Create a group to hold object earth
   earthGroup = new THREE.Object3D();
-  earthGroup.position.set(0, -7, -30);
+  earthGroup.position.set(0, -7, 20);
   objEarth = await loadObjMtl(
     objModelEarth,
     [0, 0, 0],
@@ -114,18 +113,17 @@ async function createShip() {
 }
 
 // Function to create the Asteroid
-async function createAsteroid() {
-  asteroidsGroup = new THREE.Object3D();
-  asteroidsGroup.position.set(0, -7, -30);
+async function createAsteroid(noAsteroids, firstTime) {
+  if (firstTime) {
+    asteroidsGroup = new THREE.Object3D();
+    asteroidsGroup.position.set(0, -7, 20);
+  }
 
   // radius: Entre 11 y 14.5
   let x = 0,
     y = 0;
 
-  let PX = 0;
-  let PY = -7;
-
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < noAsteroids; i++) {
     let radius = genRand(11, 14.5, 2);
     let angle = Math.random() * Math.PI * 2;
     x = Math.cos(angle) * radius;
@@ -138,27 +136,17 @@ async function createAsteroid() {
       [0, 0, 0]
     );
 
+    //Save the angle to change the position later
+    objAsteroid.angle = angle;
+
     listAsteroid.push(objAsteroid);
-
-    // 1st quadrant
-    if (PX > x && PY >= y) console.log("1st quadrant");
-
-    // 2nd quadrant
-    if (PX <= x && PY > y) console.log("2nd quadrant");
-
-    // 3rd quadrant
-    if (PX < x && PY <= y) console.log("3rd quadrant");
-
-    // 4th quadrant
-    if (PX >= x && PY < y) console.log("4th quadrant");
 
     //Add Asteroids to its group
     asteroidsGroup.add(objAsteroid);
-    //scene.add(objAsteroid);
   }
 
   //Add the Asteroid to the scene
-  scene.add(asteroidsGroup);
+  if (firstTime) scene.add(asteroidsGroup);
 }
 
 //Function to rotate the earth
@@ -166,46 +154,27 @@ function rotateEarth(angle) {
   earthGroup.rotation.z += angle;
 }
 
-let t = 0;
 //Function to rotate the asteroids
 function rotateAsteroids(angle) {
   let PX = 0;
   let PY = -7;
-  asteroidsGroup.rotation.z += angle*5;
+  if (asteroidsGroup !== null) {
+    asteroidsGroup.rotation.z += angle * 5;
+    const coneWorldPosition = new THREE.Vector3();
+    asteroidsGroup.updateMatrixWorld();
+    for (let i = 0; i < listAsteroid.length; i++) {
+      //Get the global position of each asteorid in the group
+      listAsteroid[i].getWorldPosition(coneWorldPosition);
 
-  const coneWorldPosition = new THREE.Vector3();
-  asteroidsGroup.updateMatrixWorld();
-  for (let i = 0; i < listAsteroid.length; i++) {
-    listAsteroid[i].getWorldPosition(coneWorldPosition)
-    // console.log("Asteroide position", coneWorldPosition.y);
-  
-  // console.log(asteroidsGroup.children[0].position);
-  // if (game_status) {
-  //   for (let i = 0; i < listAsteroid.length; i++) {
-  //     // if (listAsteroid[i] !== null) {
-  //     //   t += 0.01;
-  //     //   let radius = genRand(11, 14.5, 2);
-  //     //   // listAsteroid[i].position.x += angle*5 * Math.cos(t) + 0;
-  //     //   listAsteroid[i].position.x = Math.cos(angle) * 11;
-  //     //   listAsteroid[i].position.y += angle*50 * Math.sin(t) + 0; // These to strings make it work
-  //     // }
-  //     // console.log(listAsteroid[i].position.y);
-
-  //     // 1st quadrant & // 2nd quadrant
-      if (
-        (PX > coneWorldPosition.x && PY >= coneWorldPosition.y)
-      ) {
+      //If the asteorid position is in the 1st quadrant, the postion change
+      if (PX > coneWorldPosition.x && PY >= coneWorldPosition.y) {
         let radius = genRand(11, 14.5, 2);
-        let angle = Math.random() * Math.PI;
-        // let angle = Math.PI * 2;
-        let x = Math.cos(angle) * radius;
-        let y = Math.sin(angle) * radius;
-        listAsteroid[i].position.set(x, y)
-        console.log("hola");
+        let x = Math.cos(listAsteroid[i].angle) * radius;
+        let y = Math.sin(listAsteroid[i].angle) * radius;
+        listAsteroid[i].position.set(x, y);
       }
     }
-    // }
-  // }
+  }
 }
 
 //Function to load the object
@@ -248,8 +217,11 @@ async function loadObjMtl(objModelUrl, position, scale, rotation) {
 //Function to move the ship
 function moveShip(angleShip) {
   if (objShip !== null) {
-    let moveInY = normalize(mousePos.y, -0.5, 0.5, 0, 14.5);
+    let moveInY = normalize(mousePos.y, -0.5, 0.5, 1.5, 13);
+    let moveInX = normalize(mousePos.x, -0.5, 0.5, -10, 5);
     objShip.position.y += (moveInY - objShip.position.y) * 0.2;
+    objShip.position.x += (moveInX - objShip.position.x) * 0.2;
+
     objShip.rotation.x += angleShip;
   }
 }
@@ -265,8 +237,13 @@ function initPointerLock() {
       container_start.style.display = "none";
       //Give the control to move the ship
       document.addEventListener("mousemove", handleMouseMove, false);
+
+      document.getElementById("page").style.cursor = "none";
       //Change the game status to true
       game_status = true;
+
+      //Create asteroids
+      createAsteroid(10, true);
     },
     false
   );
@@ -286,6 +263,10 @@ function updateScore(deltat) {
   if (game_status) {
     score += 0.0099 * deltat;
     div_score.innerHTML = `Score: ${Math.floor(score)}`;
+
+    if (Math.floor(score) % 1000 === 0 && Math.floor(score) !== 0) {
+      createAsteroid(1, false);
+    }
   }
 }
 
