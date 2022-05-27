@@ -3,6 +3,7 @@
 import * as THREE from "../libs/three.js/three.module.js";
 import { OBJLoader } from "../libs/three.js/loaders/OBJLoader.js";
 import { MTLLoader } from "../libs/three.js/loaders/MTLLoader.js";
+import {Game, Utils} from './common.js';
 
 //General variables
 let game_status = false;
@@ -21,6 +22,7 @@ let renderer = null,
   fieldOfView = null,
   nearPlane = null,
   farShip = null,
+  shipBBox = null,
   currentTime = Date.now();
 
 // Movement variables
@@ -108,6 +110,23 @@ async function createShip() {
     [0, -1.5, 0]
   );
 
+  let shipBoundingBox
+
+  // objShip.traverse(function (child) {
+  //   if (child.isMesh) {
+      
+  //     console.log(child)
+  //     shipBoundingBox = new THREE.Box3().setFromObject(objShip);
+  //     shipBBox = new THREE.BoxHelper(shipBoundingBox, 0x00ff00);
+  //   }
+  // });
+
+  // shipBoundingBox = new THREE.Box3().setFromObject(objShip);
+  shipBBox = new THREE.BoxHelper(objShip, 0x00ff00);
+  
+  shipBBox.update();
+  shipBBox.visible = true;
+  scene.add(shipBBox)
   //Add the Ship to the scene
   scene.add(objShip);
 }
@@ -221,7 +240,7 @@ function moveShip(angleShip) {
     let moveInX = normalize(mousePos.x, -0.5, 0.5, -10, 5);
     objShip.position.y += (moveInY - objShip.position.y) * 0.2;
     objShip.position.x += (moveInX - objShip.position.x) * 0.2;
-
+    
     objShip.rotation.x += angleShip;
   }
 }
@@ -294,6 +313,7 @@ function update() {
     update();
   });
   renderer.render(scene, camera);
+  
   animate();
 }
 
