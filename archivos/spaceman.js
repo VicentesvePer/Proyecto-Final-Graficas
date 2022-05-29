@@ -22,7 +22,12 @@ let renderer = null,
   fieldOfView = null,
   nearPlane = null,
   farShip = null,
-  shipBBox = null,
+  shipBoxHelper = null,
+  shipBox = null,
+  asteroidBoxHelper = null,
+  asteroidBox = null,
+  lstBoxHelpers = [],
+  shipGroup = [],
   currentTime = Date.now();
 
 // Movement variables
@@ -103,32 +108,25 @@ async function createEarth() {
 
 // Function to create the ship
 async function createShip() {
+  shipGroup = new THREE.Object3D;
+
+  shipGroup.position.set(0, 0, 0);
   objShip = await loadObjMtl(
     objModelShip,
-    [-10, 5, 0],
+    [0, 0, 0],
     [0.4, 0.4, 0.4],
     [0, -1.5, 0]
   );
-
-  let shipBoundingBox
-
-  // objShip.traverse(function (child) {
-  //   if (child.isMesh) {
-      
-  //     console.log(child)
-  //     shipBoundingBox = new THREE.Box3().setFromObject(objShip);
-  //     shipBBox = new THREE.BoxHelper(shipBoundingBox, 0x00ff00);
-  //   }
-  // });
-
-  // shipBoundingBox = new THREE.Box3().setFromObject(objShip);
-  shipBBox = new THREE.BoxHelper(objShip, 0x00ff00);
   
-  shipBBox.update();
-  shipBBox.visible = true;
-  scene.add(shipBBox)
-  //Add the Ship to the scene
-  scene.add(objShip);
+  shipBoxHelper = new THREE.BoxHelper(objShip, 0x00ff00); 
+  shipBoxHelper.visible = true;
+
+  shipGroup.add(shipBoxHelper)
+  
+  //Add the ship to the group and the group to the scene
+  shipGroup.add(objShip)
+  scene.add(shipGroup);
+
 }
 
 // Function to create the Asteroid
@@ -142,7 +140,7 @@ async function createAsteroid(noAsteroids, firstTime) {
   let x = 0,
     y = 0;
 
-  for (let i = 0; i < noAsteroids; i++) {
+  for (let i = 0; i < 2; i++) {
     let radius = genRand(11, 14.5, 2);
     let angle = Math.random() * Math.PI * 2;
     x = Math.cos(angle) * radius;
@@ -159,6 +157,16 @@ async function createAsteroid(noAsteroids, firstTime) {
     objAsteroid.angle = angle;
 
     listAsteroid.push(objAsteroid);
+
+    asteroidBoxHelper = new THREE.BoxHelper(objAsteroid, 0x00ff00); 
+    asteroidBoxHelper.visible = true;
+    // asteroidBoxHelper
+    //asteroidBoxHelper.checkCollisions();
+
+    asteroidsGroup.add(asteroidBoxHelper)
+
+    //Add Box helpers to the list
+    lstBoxHelpers.push(asteroidBoxHelper)
 
     //Add Asteroids to its group
     asteroidsGroup.add(objAsteroid);
@@ -181,9 +189,12 @@ function rotateAsteroids(angle) {
     asteroidsGroup.rotation.z += angle * 5;
     const coneWorldPosition = new THREE.Vector3();
     asteroidsGroup.updateMatrixWorld();
+
     for (let i = 0; i < listAsteroid.length; i++) {
       //Get the global position of each asteorid in the group
       listAsteroid[i].getWorldPosition(coneWorldPosition);
+      //console.log(coneWorldPosition);
+
 
       //If the asteorid position is in the 1st quadrant, the postion change
       if (PX > coneWorldPosition.x && PY >= coneWorldPosition.y) {
@@ -191,6 +202,10 @@ function rotateAsteroids(angle) {
         let x = Math.cos(listAsteroid[i].angle) * radius;
         let y = Math.sin(listAsteroid[i].angle) * radius;
         listAsteroid[i].position.set(x, y);
+        // console.log(asteroidsGroup.children);
+        // lstBoxHelpers[i].update();
+        // asteroidsGroup.children[i].position.set(x, y);
+        
       }
     }
   }
@@ -235,14 +250,75 @@ async function loadObjMtl(objModelUrl, position, scale, rotation) {
 
 //Function to move the ship
 function moveShip(angleShip) {
-  if (objShip !== null) {
+  if (shipGroup !== null) {
     let moveInY = normalize(mousePos.y, -0.5, 0.5, 1.5, 13);
     let moveInX = normalize(mousePos.x, -0.5, 0.5, -10, 5);
-    objShip.position.y += (moveInY - objShip.position.y) * 0.2;
-    objShip.position.x += (moveInX - objShip.position.x) * 0.2;
+    shipGroup.position.y += (moveInY - shipGroup.position.y) * 0.2; 
+    shipGroup.position.x += (moveInX - shipGroup.position.x) * 0.2;
     
-    objShip.rotation.x += angleShip;
+    if (objShip !== null) objShip.rotation.x += angleShip;
   }
+}
+
+//Funtion to check collisions
+function checkCollisions() {
+
+  shipBox = new THREE.Box3().setFromObject(objShip);
+
+  if (listAsteroid.length > 0) {
+    for (let i = 0; i < listAsteroid[i].length; i++) {
+      lstBoxHelpers[i].checkCollisions(); // this.cubeBBox.update(); -> update the bbox to match the cube's position
+  
+      let asteroidBox = new THREE.Box3().setFromObject(listAsteroid[i]); 
+  
+      listAsteroid[i].material = asteroidBox.intersectsBox(shipBox)
+        ? Game.materials.colliding
+        : console.log("collision");
+    }
+  }
+
+
+
+  // this.knot.rotation.x += (Math.PI / 4) * delta;
+  // this.knotBBox.update();
+
+  // Utils.updateShadow(this.cubeShadow, this.cube);
+  // 
+
+  // let sphereBox = new THREE.Box3().setFromObject(this.sphere);
+  // let cubeBox = new THREE.Box3().setFromObject(this.cube);
+  // let knotBox = new THREE.Box3().setFromObject(this.knot);
+
+
+
+  
+  // game.update = function (delta) {
+  //   this.knot.rotation.x += (Math.PI / 4) * delta;
+  //   this.knotBBox.update();
+
+  //   Utils.updateShadow(this.cubeShadow, this.cube);
+  //   this.cubeBBox.update(); // update the bbox to match the cube's position
+
+  //   let sphereBox = new THREE.Box3().setFromObject(this.sphere);
+  //   let cubeBox = new THREE.Box3().setFromObject(this.cube);
+  //   let knotBox = new THREE.Box3().setFromObject(this.knot);
+
+  //   this.sphere.material = sphereBox.intersectsBox(cubeBox)
+  //     ? Game.materials.colliding
+  //     : Game.materials.solid;
+  //   this.knot.material = knotBox.intersectsBox(cubeBox)
+  //     ? Game.materials.colliding
+  //     : Game.materials.solid;
+  
+
+  
+
+  // this.objShip.material = shipBox.intersectsBox(cubeBox)
+  //   ? Game.materials.colliding
+  //   : Game.materials.solid;
+  // this.knot.material = knotBox.intersectsBox(cubeBox)
+  //   ? Game.materials.colliding
+  //   : Game.materials.solid;
 }
 
 function initPointerLock() {
@@ -263,6 +339,8 @@ function initPointerLock() {
 
       //Create asteroids
       createAsteroid(10, true);
+      //Check collisions
+      checkCollisions();
     },
     false
   );
@@ -306,6 +384,10 @@ function animate() {
 
   //Update score
   updateScore(deltat);
+
+  checkCollisions()  
+
+
 }
 
 function update() {
@@ -359,6 +441,7 @@ async function createScene(canvas) {
 
   //Resize the page
   window.addEventListener("resize", resize, false);
+
 }
 
 function resize() {
