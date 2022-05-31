@@ -49,3 +49,11 @@ body {
   text-decoration: underline;
   cursor: pointer;
 }
+
+.lifes {
+  height: 30px;
+}
+
+.lifes > img {
+  height: 100%;
+}

@@ -3,7 +3,6 @@
 import * as THREE from "../libs/three.js/three.module.js";
 import { OBJLoader } from "../libs/three.js/loaders/OBJLoader.js";
 import { MTLLoader } from "../libs/three.js/loaders/MTLLoader.js";
-import {Game, Utils} from './common.js';
 
 //General variables
 let game_status = false;
@@ -25,15 +24,15 @@ let renderer = null,
   shipBoxHelper = null,
   shipBox = null,
   asteroidBoxHelper = null,
-  asteroidBox = null,
   lstBoxHelpers = [],
   shipGroup = [],
   currentTime = Date.now();
 
 // Movement variables
-var WIDTH,
+let WIDTH,
   HEIGHT,
-  mousePos = { x: 0, y: 0 };
+  mousePos = { x: 0, y: 0 },
+  isCollision = false;
 
 // Lights variables
 let spotLight = null,
@@ -54,7 +53,8 @@ let objModelEarth = { obj: "../assets/earth.obj", mtl: "../assets/earth.mtl" },
 
 //Score variables
 let div_score = null,
-  score = 0;
+  score = 0,
+  lifes = 3;
 
 function main() {
   const canvas = document.getElementById("webglcanvas");
@@ -108,25 +108,24 @@ async function createEarth() {
 
 // Function to create the ship
 async function createShip() {
-  shipGroup = new THREE.Object3D;
+  shipGroup = new THREE.Object3D();
 
-  shipGroup.position.set(0, 0, 0);
+  shipGroup.position.set(0, 0, 20);
   objShip = await loadObjMtl(
     objModelShip,
     [0, 0, 0],
-    [0.4, 0.4, 0.4],
+    [0.1, 0.1, 0.1],
     [0, -1.5, 0]
   );
-  
-  shipBoxHelper = new THREE.BoxHelper(objShip, 0x00ff00); 
+
+  shipBoxHelper = new THREE.BoxHelper(objShip, 0x00ff00);
   shipBoxHelper.visible = true;
+  shipBoxHelper.update();
+  scene.add(shipBoxHelper);
 
-  shipGroup.add(shipBoxHelper)
-  
   //Add the ship to the group and the group to the scene
-  shipGroup.add(objShip)
+  shipGroup.add(objShip);
   scene.add(shipGroup);
-
 }
 
 // Function to create the Asteroid
@@ -140,7 +139,7 @@ async function createAsteroid(noAsteroids, firstTime) {
   let x = 0,
     y = 0;
 
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < noAsteroids; i++) {
     let radius = genRand(11, 14.5, 2);
     let angle = Math.random() * Math.PI * 2;
     x = Math.cos(angle) * radius;
@@ -158,15 +157,16 @@ async function createAsteroid(noAsteroids, firstTime) {
 
     listAsteroid.push(objAsteroid);
 
-    asteroidBoxHelper = new THREE.BoxHelper(objAsteroid, 0x00ff00); 
+    asteroidBoxHelper = new THREE.BoxHelper(objAsteroid, 0x00ff00);
     asteroidBoxHelper.visible = true;
+    asteroidBoxHelper.update();
     // asteroidBoxHelper
     //asteroidBoxHelper.checkCollisions();
 
-    asteroidsGroup.add(asteroidBoxHelper)
+    scene.add(asteroidBoxHelper);
 
     //Add Box helpers to the list
-    lstBoxHelpers.push(asteroidBoxHelper)
+    lstBoxHelpers.push(asteroidBoxHelper);
 
     //Add Asteroids to its group
     asteroidsGroup.add(objAsteroid);
@@ -183,29 +183,25 @@ function rotateEarth(angle) {
 
 //Function to rotate the asteroids
 function rotateAsteroids(angle) {
-  let PX = 0;
-  let PY = -7;
-  if (asteroidsGroup !== null) {
-    asteroidsGroup.rotation.z += angle * 5;
-    const coneWorldPosition = new THREE.Vector3();
-    asteroidsGroup.updateMatrixWorld();
+  if (game_status) {
+    let PX = 0;
+    let PY = -7;
+    if (asteroidsGroup !== null) {
+      asteroidsGroup.rotation.z += angle * 5;
+      const coneWorldPosition = new THREE.Vector3();
+      asteroidsGroup.updateMatrixWorld();
 
-    for (let i = 0; i < listAsteroid.length; i++) {
-      //Get the global position of each asteorid in the group
-      listAsteroid[i].getWorldPosition(coneWorldPosition);
-      //console.log(coneWorldPosition);
+      for (let i = 0; i < listAsteroid.length; i++) {
+        //Get the global position of each asteorid in the group
+        listAsteroid[i].getWorldPosition(coneWorldPosition);
 
-
-      //If the asteorid position is in the 1st quadrant, the postion change
-      if (PX > coneWorldPosition.x && PY >= coneWorldPosition.y) {
-        let radius = genRand(11, 14.5, 2);
-        let x = Math.cos(listAsteroid[i].angle) * radius;
-        let y = Math.sin(listAsteroid[i].angle) * radius;
-        listAsteroid[i].position.set(x, y);
-        // console.log(asteroidsGroup.children);
-        // lstBoxHelpers[i].update();
-        // asteroidsGroup.children[i].position.set(x, y);
-        
+        //If the asteorid position is in the 1st quadrant, the postion change
+        if (PX > coneWorldPosition.x && PY >= coneWorldPosition.y) {
+          let radius = genRand(11, 14.5, 2);
+          let x = Math.cos(listAsteroid[i].angle) * radius;
+          let y = Math.sin(listAsteroid[i].angle) * radius;
+          listAsteroid[i].position.set(x, y);
+        }
       }
     }
   }
@@ -250,75 +246,74 @@ async function loadObjMtl(objModelUrl, position, scale, rotation) {
 
 //Function to move the ship
 function moveShip(angleShip) {
-  if (shipGroup !== null) {
-    let moveInY = normalize(mousePos.y, -0.5, 0.5, 1.5, 13);
-    let moveInX = normalize(mousePos.x, -0.5, 0.5, -10, 5);
-    shipGroup.position.y += (moveInY - shipGroup.position.y) * 0.2; 
-    shipGroup.position.x += (moveInX - shipGroup.position.x) * 0.2;
-    
-    if (objShip !== null) objShip.rotation.x += angleShip;
+  if (game_status) {
+    if (shipGroup !== null) {
+      let moveInY = normalize(mousePos.y, -0.5, 0.5, 4, 7.5);
+      let moveInX = normalize(mousePos.x, -2, 1, -10, 3);
+      shipGroup.position.y += (moveInY - shipGroup.position.y) * 0.2;
+      shipGroup.position.x += (moveInX - shipGroup.position.x) * 0.2;
+
+      if (objShip !== null) {
+        if (isCollision == true) {
+          objShip.rotation.z += angleShip * 2;
+          setTimeout(() => {
+            isCollision = false;
+          }, 3000);
+        } else {
+          objShip.rotation.z = -1.5;
+          objShip.rotation.x += angleShip;
+        }
+      }
+    }
   }
+}
+
+//Function tu update the lifes
+function updateLifes() {
+  if (lifes === 2) {
+    let life3 = document.getElementById("life3");
+    life3.src = "../assets/images/sun_empty_life.png";
+  } else if (lifes == 1) {
+    let life2 = document.getElementById("life2");
+    life2.src = "../assets/images/sun_empty_life.png";
+  } else {
+    let life1 = document.getElementById("life1");
+    life1.src = "../assets/images/sun_empty_life.png";
+    game_status = false;
+    document.getElementById("page").style.cursor = "default";
+  }
+}
+
+//Function to normalize the posisition from the mouse to the object
+function normalize(v, vmin, vmax, tmin, tmax) {
+  var nv = Math.max(Math.min(v, vmax), vmin);
+  var dv = vmax - vmin;
+  var pc = (nv - vmin) / dv;
+  var dt = tmax - tmin;
+  var tv = tmin + pc * dt;
+  return tv;
 }
 
 //Funtion to check collisions
 function checkCollisions() {
-
   shipBox = new THREE.Box3().setFromObject(objShip);
 
   if (listAsteroid.length > 0) {
-    for (let i = 0; i < listAsteroid[i].length; i++) {
-      lstBoxHelpers[i].checkCollisions(); // this.cubeBBox.update(); -> update the bbox to match the cube's position
-  
-      let asteroidBox = new THREE.Box3().setFromObject(listAsteroid[i]); 
-  
-      listAsteroid[i].material = asteroidBox.intersectsBox(shipBox)
-        ? Game.materials.colliding
-        : console.log("collision");
+    for (let i = 0; i < listAsteroid.length; i++) {
+      let asteroidBox = new THREE.Box3().setFromObject(listAsteroid[i]);
+
+      if (asteroidBox.intersectsBox(shipBox)) {
+        lstBoxHelpers[i].material.color = new THREE.Color("red");
+        asteroidsGroup.remove(listAsteroid[i]);
+        lstBoxHelpers[i].visible = false;
+        lifes--;
+        isCollision = true;
+        updateLifes();
+      } else {
+        lstBoxHelpers[i].material.color = new THREE.Color("green");
+      }
     }
   }
-
-
-
-  // this.knot.rotation.x += (Math.PI / 4) * delta;
-  // this.knotBBox.update();
-
-  // Utils.updateShadow(this.cubeShadow, this.cube);
-  // 
-
-  // let sphereBox = new THREE.Box3().setFromObject(this.sphere);
-  // let cubeBox = new THREE.Box3().setFromObject(this.cube);
-  // let knotBox = new THREE.Box3().setFromObject(this.knot);
-
-
-
-  
-  // game.update = function (delta) {
-  //   this.knot.rotation.x += (Math.PI / 4) * delta;
-  //   this.knotBBox.update();
-
-  //   Utils.updateShadow(this.cubeShadow, this.cube);
-  //   this.cubeBBox.update(); // update the bbox to match the cube's position
-
-  //   let sphereBox = new THREE.Box3().setFromObject(this.sphere);
-  //   let cubeBox = new THREE.Box3().setFromObject(this.cube);
-  //   let knotBox = new THREE.Box3().setFromObject(this.knot);
-
-  //   this.sphere.material = sphereBox.intersectsBox(cubeBox)
-  //     ? Game.materials.colliding
-  //     : Game.materials.solid;
-  //   this.knot.material = knotBox.intersectsBox(cubeBox)
-  //     ? Game.materials.colliding
-  //     : Game.materials.solid;
-  
-
-  
-
-  // this.objShip.material = shipBox.intersectsBox(cubeBox)
-  //   ? Game.materials.colliding
-  //   : Game.materials.solid;
-  // this.knot.material = knotBox.intersectsBox(cubeBox)
-  //   ? Game.materials.colliding
-  //   : Game.materials.solid;
 }
 
 function initPointerLock() {
@@ -346,23 +341,14 @@ function initPointerLock() {
   );
 }
 
-//Function to normalize the posisition from the mouse to the object
-function normalize(v, vmin, vmax, tmin, tmax) {
-  var nv = Math.max(Math.min(v, vmax), vmin);
-  var dv = vmax - vmin;
-  var pc = (nv - vmin) / dv;
-  var dt = tmax - tmin;
-  var tv = tmin + pc * dt;
-  return tv;
-}
-
 function updateScore(deltat) {
   if (game_status) {
-    score += 0.0099 * deltat;
     div_score.innerHTML = `Score: ${Math.floor(score)}`;
-
     if (Math.floor(score) % 1000 === 0 && Math.floor(score) !== 0) {
-      createAsteroid(1, false);
+      createAsteroid(10, false);
+      score++;
+    } else {
+      score += 0.01 * deltat;
     }
   }
 }
@@ -385,17 +371,24 @@ function animate() {
   //Update score
   updateScore(deltat);
 
-  checkCollisions()  
+  //Update shipBoxHelper
+  shipBoxHelper.update();
 
-
+  //Update lstBoxHelpers
+  for (let i = 0; i < lstBoxHelpers.length; i++) {
+    lstBoxHelpers[i].update();
+  }
+  //Function to check if the ship had a colission with an asteroid
+  checkCollisions();
 }
 
 function update() {
   requestAnimationFrame(function () {
     update();
   });
+
   renderer.render(scene, camera);
-  
+
   animate();
 }
 
@@ -441,7 +434,6 @@ async function createScene(canvas) {
 
   //Resize the page
   window.addEventListener("resize", resize, false);
-
 }
 
 function resize() {
