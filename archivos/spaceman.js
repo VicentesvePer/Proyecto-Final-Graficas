@@ -31,7 +31,7 @@ let renderer = null,
   currentTime = Date.now();
 
 // Movement variables
-var WIDTH,
+let WIDTH,
   HEIGHT,
   mousePos = { x: 0, y: 0 };
 
@@ -110,7 +110,7 @@ async function createEarth() {
 async function createShip() {
   shipGroup = new THREE.Object3D;
 
-  shipGroup.position.set(0, 0, 0);
+  shipGroup.position.set(0, 0, 20);
   objShip = await loadObjMtl(
     objModelShip,
     [0, 0, 0],
@@ -120,13 +120,12 @@ async function createShip() {
   
   shipBoxHelper = new THREE.BoxHelper(objShip, 0x00ff00); 
   shipBoxHelper.visible = true;
-
-  shipGroup.add(shipBoxHelper)
+  shipBoxHelper.update()
+  scene.add(shipBoxHelper)
   
   //Add the ship to the group and the group to the scene
   shipGroup.add(objShip)
   scene.add(shipGroup);
-
 }
 
 // Function to create the Asteroid
@@ -140,11 +139,16 @@ async function createAsteroid(noAsteroids, firstTime) {
   let x = 0,
     y = 0;
 
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 2; i++) 
+  {
     let radius = genRand(11, 14.5, 2);
     let angle = Math.random() * Math.PI * 2;
-    x = Math.cos(angle) * radius;
+    // x = Math.cos(angle) * radius;
+    // y = Math.sin(angle) * radius;
+
+    x = Math.cos(Math.PI/2) * radius;
     y = Math.sin(angle) * radius;
+    
 
     objAsteroid = await loadObjMtl(
       objModelAsteroid,
@@ -160,10 +164,11 @@ async function createAsteroid(noAsteroids, firstTime) {
 
     asteroidBoxHelper = new THREE.BoxHelper(objAsteroid, 0x00ff00); 
     asteroidBoxHelper.visible = true;
+    asteroidBoxHelper.update()
     // asteroidBoxHelper
     //asteroidBoxHelper.checkCollisions();
 
-    asteroidsGroup.add(asteroidBoxHelper)
+    scene.add(asteroidBoxHelper)
 
     //Add Box helpers to the list
     lstBoxHelpers.push(asteroidBoxHelper)
@@ -261,19 +266,33 @@ function moveShip(angleShip) {
 }
 
 //Funtion to check collisions
-function checkCollisions() {
-
+function checkCollisions() 
+{
   shipBox = new THREE.Box3().setFromObject(objShip);
 
-  if (listAsteroid.length > 0) {
-    for (let i = 0; i < listAsteroid[i].length; i++) {
-      lstBoxHelpers[i].checkCollisions(); // this.cubeBBox.update(); -> update the bbox to match the cube's position
-  
+  if (listAsteroid.length > 0) 
+  {
+    for (let i = 0; i < listAsteroid.length; i++) 
+    {
+      // lstBoxHelpers[i].checkCollisions(); // this.cubeBBox.update(); -> update the bbox to match the cube's position
+      
       let asteroidBox = new THREE.Box3().setFromObject(listAsteroid[i]); 
-  
-      listAsteroid[i].material = asteroidBox.intersectsBox(shipBox)
-        ? Game.materials.colliding
-        : console.log("collision");
+      
+      // console.log(asteroidBox)
+      // console.log(asteroidBox, i)
+
+      if(asteroidBox.intersectsBox(shipBox))
+      {
+        lstBoxHelpers[i].material.color = new THREE.Color('red')
+        console.log("collision");
+      }
+      else
+      {
+        lstBoxHelpers[i].material.color = new THREE.Color('green')
+      }
+      // listAsteroid[i].material = asteroidBox.intersectsBox(shipBox)
+      //   ? Game.materials.colliding
+      //   : console.log("collision");
     }
   }
 
@@ -356,13 +375,20 @@ function normalize(v, vmin, vmax, tmin, tmax) {
   return tv;
 }
 
-function updateScore(deltat) {
-  if (game_status) {
-    score += 0.0099 * deltat;
+function updateScore(deltat) 
+{
+  if (game_status) 
+  {
     div_score.innerHTML = `Score: ${Math.floor(score)}`;
-
-    if (Math.floor(score) % 1000 === 0 && Math.floor(score) !== 0) {
+    // console.log(score)
+    if (Math.floor(score) % 100 === 0 && Math.floor(score) !== 0) {
       createAsteroid(1, false);
+      console.log("adding asteroid")
+      score++
+    }
+    else
+    {
+      score += 0.01 * deltat;
     }
   }
 }
@@ -385,15 +411,19 @@ function animate() {
   //Update score
   updateScore(deltat);
 
+  shipBoxHelper.update()
+
+  for(let i = 0; i<lstBoxHelpers.length; i++)
+  {
+    lstBoxHelpers[i].update()
+  }
+
   checkCollisions()  
-
-
 }
 
 function update() {
-  requestAnimationFrame(function () {
-    update();
-  });
+  requestAnimationFrame(function () {update();});
+
   renderer.render(scene, camera);
   
   animate();
@@ -437,7 +467,8 @@ async function createScene(canvas) {
   );
 
   // Add  a camera so we can view the scene
-  camera.position.set(0, 5, 30);
+  camera.position.set(0, 5, 50);
+  camera.lookAt(0,0,0)
 
   //Resize the page
   window.addEventListener("resize", resize, false);

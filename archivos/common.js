@@ -2,7 +2,7 @@
 // Game singleton
 //
 
-import * as THREE from '../../libs/three.js/three.module.js'
+import * as THREE from '../libs/three.js/three.module.js'
 
 class Game{
 
