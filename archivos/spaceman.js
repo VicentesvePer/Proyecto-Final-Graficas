@@ -3,6 +3,7 @@
 import * as THREE from "../libs/three.js/three.module.js";
 import { OBJLoader } from "../libs/three.js/loaders/OBJLoader.js";
 import { MTLLoader } from "../libs/three.js/loaders/MTLLoader.js";
+import {Particle, ParticleSystem} from '../assets/particleSystem.js'
 
 //General variables
 let game_status = false;
@@ -24,6 +25,7 @@ let renderer = null,
   shipBoxHelper = null,
   shipBox = null,
   asteroidBoxHelper = null,
+  smoke = null,
   lstBoxHelpers = [],
   shipGroup = [],
   currentTime = Date.now();
@@ -309,6 +311,7 @@ function checkCollisions() {
         lifes--;
         isCollision = true;
         updateLifes();
+        smokeParticles();
       } else {
         lstBoxHelpers[i].material.color = new THREE.Color("green");
       }
@@ -380,6 +383,11 @@ function animate() {
   }
   //Function to check if the ship had a colission with an asteroid
   checkCollisions();
+
+  //Verify if first instance of smoke exists before trying to update
+  if(smoke != null){
+    smoke.update(deltat);
+  }
 }
 
 function update() {
@@ -388,7 +396,7 @@ function update() {
   });
 
   renderer.render(scene, camera);
-
+  
   animate();
 }
 
@@ -434,6 +442,7 @@ async function createScene(canvas) {
 
   //Resize the page
   window.addEventListener("resize", resize, false);
+
 }
 
 function resize() {
@@ -461,4 +470,19 @@ function genRand(min, max, decimalPlaces) {
   var rand = Math.random() * (max - min) + min;
   var power = Math.pow(10, decimalPlaces);
   return Math.floor(rand * power) / power;
+}
+
+function smokeParticles(){
+  let vertices = [], velocities = [], accelerations = [];
+  const factor = 0.01;
+  const shipPosition = new THREE.Vector3();
+  objShip.getWorldPosition(shipPosition);
+  for(let i = 0; i < 20; i++)
+    {
+        vertices.push(shipPosition.x, shipPosition.y, shipPosition.z);
+        velocities.push((Math.random()*1-1) * factor, (Math.random()*2-1)*factor, 0*factor);
+        accelerations.push((Math.random()*2-1) * factor, (Math.random()*2-1)*factor, (Math.random()*2-1)*factor);
+    }
+    smoke = new ParticleSystem(vertices, velocities, accelerations, 5, 1, "../assets/images/cloud_1_512.png");
+    scene.add(smoke.particleObjects);
 }
