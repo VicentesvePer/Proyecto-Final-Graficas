@@ -28,9 +28,10 @@ class Particle
         this.alive = true;
     }
 
-    reset()
+    remove()
     {
-        this.visible = flase
+        this.visible = false
+        this.alive = false
     }
 
     isDead()
@@ -47,7 +48,7 @@ class Particle
 
         if(this.isDead())
         {
-            this.reset();
+            this.remove();
         }
     }
 }
@@ -107,6 +108,7 @@ class ParticleSystem
 
         if(this.material.opacity <= 0)
             this.material.opacity = 1.0;
+
 
         positions.needsUpdate = true;
     }

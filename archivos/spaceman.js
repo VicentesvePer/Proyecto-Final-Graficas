@@ -17,7 +17,10 @@ let renderer = null,
   objEarth = null,
   objShip = null,
   objAsteroid = null,
+  objLightning = null,
   listAsteroid = [],
+  listPowerUp = [],
+  listSmoke = [],
   aspectRatio = null,
   fieldOfView = null,
   nearPlane = null,
@@ -25,6 +28,7 @@ let renderer = null,
   shipBoxHelper = null,
   shipBox = null,
   asteroidBoxHelper = null,
+  powerupBoxHelper = null,
   smoke = null,
   lstBoxHelpers = [],
   shipGroup = [],
@@ -50,6 +54,10 @@ let objModelEarth = { obj: "../assets/earth.obj", mtl: "../assets/earth.mtl" },
   },
   objModelAsteroid = {
     obj: "../assets/objects/Asteroid/asteroid.obj",
+    mtl: "../assets/objects/Asteroid/asteroid.mtl",
+  },
+  objModelLightning = {
+    obj: "../assets/Lightning.obj",
     mtl: "../assets/objects/Asteroid/asteroid.mtl",
   };
 
@@ -108,6 +116,8 @@ async function createEarth() {
   scene.add(earthGroup);
 }
 
+
+
 // Function to create the ship
 async function createShip() {
   shipGroup = new THREE.Object3D();
@@ -121,13 +131,50 @@ async function createShip() {
   );
 
   shipBoxHelper = new THREE.BoxHelper(objShip, 0x00ff00);
-  shipBoxHelper.visible = true;
+  shipBoxHelper.visible = false;
   shipBoxHelper.update();
   scene.add(shipBoxHelper);
 
   //Add the ship to the group and the group to the scene
   shipGroup.add(objShip);
   scene.add(shipGroup);
+}
+
+// Function to create PowerUp
+async function createPowerUp() {
+  let x = 0,
+  y = 0;
+
+  let radius = genRand(11, 14.5, 2);
+  let angle = Math.random() * Math.PI * 2;
+  x = Math.cos(angle) * radius;
+  y = Math.sin(angle) * radius;
+
+  objLightning = await loadObjMtl(
+    objModelLightning,
+    [x, y, 0],
+    [0.1, 0.1, 0.1],
+    [0, 0, 0]
+  );
+
+  //Save the angle to change the position later
+  objLightning.angle = angle;
+
+  listPowerUp.push(objLightning);
+
+  powerupBoxHelper = new THREE.BoxHelper(objLightning, 0x00ff00);
+  powerupBoxHelper.visible = false;
+  powerupBoxHelper.update();
+  // asteroidBoxHelper
+  //asteroidBoxHelper.checkCollisions();
+
+  scene.add(powerupBoxHelper);
+
+  //Add Box helpers to the list
+  lstBoxHelpers.push(powerupBoxHelper);
+
+  //Add Asteroids to its group
+  asteroidsGroup.add(objLightning);
 }
 
 // Function to create the Asteroid
@@ -151,7 +198,7 @@ async function createAsteroid(noAsteroids, firstTime) {
       objModelAsteroid,
       [x, y, 0],
       [5, 5, 5],
-      [0, 0, 0]
+      [Math.random(), Math.random(), Math.random()]
     );
 
     //Save the angle to change the position later
@@ -160,7 +207,7 @@ async function createAsteroid(noAsteroids, firstTime) {
     listAsteroid.push(objAsteroid);
 
     asteroidBoxHelper = new THREE.BoxHelper(objAsteroid, 0x00ff00);
-    asteroidBoxHelper.visible = true;
+    asteroidBoxHelper.visible = false;
     asteroidBoxHelper.update();
     // asteroidBoxHelper
     //asteroidBoxHelper.checkCollisions();
@@ -272,14 +319,22 @@ function moveShip(angleShip) {
 
 //Function tu update the lifes
 function updateLifes() {
-  if (lifes === 2) {
-    let life3 = document.getElementById("life3");
+  let life3 = document.getElementById("life3");
+  let life2 = document.getElementById("life2");
+  let life1 = document.getElementById("life1");
+  if (lifes === 3) {
+    life1.src = "../assets/images/sun_full_life.png";
+    life2.src = "../assets/images/sun_full_life.png";
+    life3.src = "../assets/images/sun_full_life.png";
+  } else if (lifes === 2) {
+    life1.src = "../assets/images/sun_full_life.png";
+    life2.src = "../assets/images/sun_full_life.png";
     life3.src = "../assets/images/sun_empty_life.png";
   } else if (lifes == 1) {
-    let life2 = document.getElementById("life2");
+    life1.src = "../assets/images/sun_full_life.png";
     life2.src = "../assets/images/sun_empty_life.png";
+    life3.src = "../assets/images/sun_empty_life.png";
   } else {
-    let life1 = document.getElementById("life1");
     life1.src = "../assets/images/sun_empty_life.png";
     game_status = false;
     document.getElementById("page").style.cursor = "default";
@@ -307,13 +362,27 @@ function checkCollisions() {
       if (asteroidBox.intersectsBox(shipBox)) {
         lstBoxHelpers[i].material.color = new THREE.Color("red");
         asteroidsGroup.remove(listAsteroid[i]);
-        lstBoxHelpers[i].visible = false;
+        // lstBoxHelpers[i].visible = false;
         lifes--;
         isCollision = true;
         updateLifes();
         smokeParticles();
       } else {
         lstBoxHelpers[i].material.color = new THREE.Color("green");
+      }
+    }
+  }
+
+  if (listPowerUp.length > 0){
+    for (let i = 0; i < listPowerUp.length; i++) {
+      let powerUpBox = new THREE.Box3().setFromObject(listPowerUp[i]);
+
+      if(powerUpBox.intersectsBox(shipBox)){
+        if(lifes < 3){
+          lifes++;
+          asteroidsGroup.remove(listPowerUp[i]);
+          updateLifes();
+        }
       }
     }
   }
@@ -347,8 +416,9 @@ function initPointerLock() {
 function updateScore(deltat) {
   if (game_status) {
     div_score.innerHTML = `Score: ${Math.floor(score)}`;
-    if (Math.floor(score) % 1000 === 0 && Math.floor(score) !== 0) {
-      createAsteroid(10, false);
+    if (Math.floor(score) % 50 === 0 && Math.floor(score) !== 0) {
+      createAsteroid(1, false);
+      createPowerUp();
       score++;
     } else {
       score += 0.01 * deltat;
@@ -385,8 +455,10 @@ function animate() {
   checkCollisions();
 
   //Verify if first instance of smoke exists before trying to update
-  if(smoke != null){
-    smoke.update(deltat);
+  if(listSmoke.length > 0){
+    for (let i = 0; i < listSmoke.length; i++) {
+      listSmoke[i].update(deltat);
+    }
   }
 }
 
@@ -484,5 +556,6 @@ function smokeParticles(){
         accelerations.push((Math.random()*2-1) * factor, (Math.random()*2-1)*factor, (Math.random()*2-1)*factor);
     }
     smoke = new ParticleSystem(vertices, velocities, accelerations, 5, 1, "../assets/images/cloud_1_512.png");
+    listSmoke.push(smoke)
     scene.add(smoke.particleObjects);
 }
