@@ -45,7 +45,29 @@ body {
   margin-top: -150px;
 }
 
-#container-start > a:hover {
+#container-instructions {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  animation: gameOver 2s;
+}
+
+#container-instructions h1 {
+  display: none;
+}
+
+@keyframes gameOver {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+#container-instructions > a:hover {
   text-decoration: underline;
   cursor: pointer;
 }

@@ -3,7 +3,7 @@
 import * as THREE from "../libs/three.js/three.module.js";
 import { OBJLoader } from "../libs/three.js/loaders/OBJLoader.js";
 import { MTLLoader } from "../libs/three.js/loaders/MTLLoader.js";
-import {Particle, ParticleSystem} from '../assets/particleSystem.js'
+import { Particle, ParticleSystem } from "../assets/particleSystem.js";
 
 //General variables
 let game_status = false;
@@ -116,8 +116,6 @@ async function createEarth() {
   scene.add(earthGroup);
 }
 
-
-
 // Function to create the ship
 async function createShip() {
   shipGroup = new THREE.Object3D();
@@ -143,7 +141,7 @@ async function createShip() {
 // Function to create PowerUp
 async function createPowerUp() {
   let x = 0,
-  y = 0;
+    y = 0;
 
   let radius = genRand(11, 14.5, 2);
   let angle = Math.random() * Math.PI * 2;
@@ -304,10 +302,11 @@ function moveShip(angleShip) {
 
       if (objShip !== null) {
         if (isCollision == true) {
-          objShip.rotation.z += angleShip * 2;
+          shipGroup.position.x = shipGroup.position.x - 0.2;
+          objShip.rotation.z += angleShip * 4;
           setTimeout(() => {
             isCollision = false;
-          }, 3000);
+          }, 1000);
         } else {
           objShip.rotation.z = -1.5;
           objShip.rotation.x += angleShip;
@@ -338,6 +337,8 @@ function updateLifes() {
     life1.src = "../assets/images/sun_empty_life.png";
     game_status = false;
     document.getElementById("page").style.cursor = "default";
+    document.getElementById("container-instructions").style.display = "block";
+    document.getElementById("id-game-over").style.display = "block";
   }
 }
 
@@ -366,19 +367,19 @@ function checkCollisions() {
         lifes--;
         isCollision = true;
         updateLifes();
-        smokeParticles();
+        //smokeParticles();
       } else {
         lstBoxHelpers[i].material.color = new THREE.Color("green");
       }
     }
   }
 
-  if (listPowerUp.length > 0){
+  if (listPowerUp.length > 0) {
     for (let i = 0; i < listPowerUp.length; i++) {
       let powerUpBox = new THREE.Box3().setFromObject(listPowerUp[i]);
 
-      if(powerUpBox.intersectsBox(shipBox)){
-        if(lifes < 3){
+      if (powerUpBox.intersectsBox(shipBox)) {
+        if (lifes < 3) {
           lifes++;
           asteroidsGroup.remove(listPowerUp[i]);
           updateLifes();
@@ -388,21 +389,25 @@ function checkCollisions() {
   }
 }
 
+//Click to start the game
 function initPointerLock() {
-  let container_start = document.getElementById("container-start");
+  let container_instructions = document.getElementById(
+    "container-instructions"
+  );
   let id_start = document.getElementById("id-start");
 
   id_start.addEventListener(
     "click",
     function () {
       //Hide the div of the instruction
-      container_start.style.display = "none";
+      container_instructions.style.display = "none";
       //Give the control to move the ship
       document.addEventListener("mousemove", handleMouseMove, false);
 
       document.getElementById("page").style.cursor = "none";
-      //Change the game status to true
-      game_status = true;
+
+      //Clear the scene (if the user restart the game)
+      resetGame();
 
       //Create asteroids
       createAsteroid(10, true);
@@ -422,6 +427,30 @@ function updateScore(deltat) {
       score++;
     } else {
       score += 0.01 * deltat;
+    }
+  }
+}
+
+//function to remove all asteorid from scene
+function resetGame() {
+  //Change the game status to true
+  game_status = true;
+
+  //Update lifes
+  lifes = 3;
+  updateLifes();
+
+  //Clear all asteroids from scene
+  if (listAsteroid.length > 0) {
+    for (let i = 0; i < listAsteroid.length; i++) {
+      asteroidsGroup.remove(listAsteroid[i]);
+    }
+  }
+
+  //Clear all power ups from scene
+  if (listPowerUp.length > 0) {
+    for (let i = 0; i < listPowerUp.length; i++) {
+      asteroidsGroup.remove(listPowerUp[i]);
     }
   }
 }
@@ -455,7 +484,7 @@ function animate() {
   checkCollisions();
 
   //Verify if first instance of smoke exists before trying to update
-  if(listSmoke.length > 0){
+  if (listSmoke.length > 0) {
     for (let i = 0; i < listSmoke.length; i++) {
       listSmoke[i].update(deltat);
     }
@@ -468,7 +497,7 @@ function update() {
   });
 
   renderer.render(scene, camera);
-  
+
   animate();
 }
 
@@ -514,7 +543,6 @@ async function createScene(canvas) {
 
   //Resize the page
   window.addEventListener("resize", resize, false);
-
 }
 
 function resize() {
@@ -544,18 +572,34 @@ function genRand(min, max, decimalPlaces) {
   return Math.floor(rand * power) / power;
 }
 
-function smokeParticles(){
-  let vertices = [], velocities = [], accelerations = [];
+function smokeParticles() {
+  let vertices = [],
+    velocities = [],
+    accelerations = [];
   const factor = 0.01;
   const shipPosition = new THREE.Vector3();
   objShip.getWorldPosition(shipPosition);
-  for(let i = 0; i < 20; i++)
-    {
-        vertices.push(shipPosition.x, shipPosition.y, shipPosition.z);
-        velocities.push((Math.random()*1-1) * factor, (Math.random()*2-1)*factor, 0*factor);
-        accelerations.push((Math.random()*2-1) * factor, (Math.random()*2-1)*factor, (Math.random()*2-1)*factor);
-    }
-    smoke = new ParticleSystem(vertices, velocities, accelerations, 5, 1, "../assets/images/cloud_1_512.png");
-    listSmoke.push(smoke)
-    scene.add(smoke.particleObjects);
+  for (let i = 0; i < 20; i++) {
+    vertices.push(shipPosition.x, shipPosition.y, shipPosition.z);
+    velocities.push(
+      (Math.random() * 1 - 1) * factor,
+      (Math.random() * 2 - 1) * factor,
+      0 * factor
+    );
+    accelerations.push(
+      (Math.random() * 2 - 1) * factor,
+      (Math.random() * 2 - 1) * factor,
+      (Math.random() * 2 - 1) * factor
+    );
+  }
+  smoke = new ParticleSystem(
+    vertices,
+    velocities,
+    accelerations,
+    5,
+    1,
+    "../assets/images/cloud_1_512.png"
+  );
+  listSmoke.push(smoke);
+  scene.add(smoke.particleObjects);
 }
