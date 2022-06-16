@@ -3,7 +3,12 @@
 import * as THREE from "../libs/three.js/three.module.js";
 import { OBJLoader } from "../libs/three.js/loaders/OBJLoader.js";
 import { MTLLoader } from "../libs/three.js/loaders/MTLLoader.js";
-import { Particle, ParticleSystem } from "../assets/particleSystem.js";
+import {
+  Particle,
+  ParticleSystem,
+} from "../assets/particles/particleSystem.js";
+
+const { System } = window.Nebula;
 
 //General variables
 let game_status = false;
@@ -17,7 +22,7 @@ let renderer = null,
   objEarth = null,
   objShip = null,
   objAsteroid = null,
-  objLightning = null,
+  objStar = null,
   listAsteroid = [],
   listPowerUp = [],
   listSmoke = [],
@@ -47,7 +52,10 @@ let spotLight = null,
   SHADOW_MAP_HEIGHT = 1024;
 
 // Objects variables
-let objModelEarth = { obj: "../assets/earth.obj", mtl: "../assets/earth.mtl" },
+let objModelEarth = {
+    obj: "../assets/objects/Earth/earth.obj",
+    mtl: "../assets/objects/Earth/earth.mtl",
+  },
   objModelShip = {
     obj: "../assets/objects/Cartoon_Rocket/cartoon_rocket.obj",
     mtl: "../assets/objects/Cartoon_Rocket/cartoon_rocket.mtl",
@@ -56,9 +64,9 @@ let objModelEarth = { obj: "../assets/earth.obj", mtl: "../assets/earth.mtl" },
     obj: "../assets/objects/Asteroid/asteroid.obj",
     mtl: "../assets/objects/Asteroid/asteroid.mtl",
   },
-  objModelLightning = {
-    obj: "../assets/Lightning.obj",
-    mtl: "../assets/objects/Asteroid/asteroid.mtl",
+  objModelStar = {
+    obj: "../assets/objects/PowerUp/power_up.obj",
+    mtl: "../assets/objects/PowerUp/power_up.mtl",
   };
 
 //Score variables
@@ -148,23 +156,21 @@ async function createPowerUp() {
   x = Math.cos(angle) * radius;
   y = Math.sin(angle) * radius;
 
-  objLightning = await loadObjMtl(
-    objModelLightning,
+  objStar = await loadObjMtl(
+    objModelStar,
     [x, y, 0],
-    [0.1, 0.1, 0.1],
+    [0.2, 0.2, 0.2],
     [0, 0, 0]
   );
 
   //Save the angle to change the position later
-  objLightning.angle = angle;
+  objStar.angle = angle;
 
-  listPowerUp.push(objLightning);
+  listPowerUp.push(objStar);
 
-  powerupBoxHelper = new THREE.BoxHelper(objLightning, 0x00ff00);
+  powerupBoxHelper = new THREE.BoxHelper(objStar, 0x00ff00);
   powerupBoxHelper.visible = false;
   powerupBoxHelper.update();
-  // asteroidBoxHelper
-  //asteroidBoxHelper.checkCollisions();
 
   scene.add(powerupBoxHelper);
 
@@ -172,7 +178,7 @@ async function createPowerUp() {
   lstBoxHelpers.push(powerupBoxHelper);
 
   //Add Asteroids to its group
-  asteroidsGroup.add(objLightning);
+  asteroidsGroup.add(objStar);
 }
 
 // Function to create the Asteroid
@@ -435,6 +441,9 @@ function updateScore(deltat) {
 function resetGame() {
   //Change the game status to true
   game_status = true;
+
+  //Reset score to 0
+  score = 0;
 
   //Update lifes
   lifes = 3;
