@@ -53,6 +53,11 @@ let spotLight = null,
   SHADOW_MAP_WIDTH = 1024,
   SHADOW_MAP_HEIGHT = 1024;
 
+// Aduio
+let powerUpAudio = new Audio('../audio/powerUpAudio.WAV'),
+ explosion = new Audio('../audio/explosion.WAV'),
+ music = new Audio('../audio/Intergalactic-Odyssey.mp3');
+
 // Objects variables
 let objModelEarth = {
     obj: "../assets/objects/Earth/earth.obj",
@@ -235,7 +240,7 @@ async function createAsteroid(noAsteroids, firstTime) {
 
   for (let i = 0; i < noAsteroids; i++) {
     let radius = genRand(11, 14.5, 2);
-    let angle = Math.random() * Math.PI * 2;
+    let angle = Math.random() * Math.PI * -1.3;
     x = Math.cos(angle) * radius;
     y = Math.sin(angle) * radius;
 
@@ -410,9 +415,15 @@ function checkCollisions() {
       if (asteroidBox.intersectsBox(shipBox) && !shielded) {
         lstBoxHelpers[i].material.color = new THREE.Color("red");
         asteroidsGroup.remove(listAsteroid[i]);
+        explosion.volume = 0.8;
+        explosion.play();
         // lstBoxHelpers[i].visible = false;
         lifes--;
-        isCollision = true;
+        if (lifes > 1){
+          isCollision = true;
+        } else{
+          isCollision = false;
+        }
         updateLifes();
         smokeParticles();
       } else {
@@ -429,6 +440,7 @@ function checkCollisions() {
         if (lifes < 3) {
           lifes++;
           asteroidsGroup.remove(listPowerUp[i]);
+          powerUpAudio.play();
           updateLifes();
         }
       }
@@ -440,6 +452,7 @@ function checkCollisions() {
       if (powerUpBox.intersectsBox(shipBox)) {
           shipBoxHelper.visible = true;
           shielded = true;
+          powerUpAudio.play();
           setTimeout(() => {
             shipBoxHelper.visible = false;
             shielded = false;
@@ -482,12 +495,17 @@ function initPointerLock() {
 function updateScore(deltat) {
   if (game_status) {
     div_score.innerHTML = `Score: ${Math.floor(score)}`;
+    if (Math.floor(score) % 200 === 0 && Math.floor(score) !== 0) {
+      createStar();
+      createShield();
+    }
     if (Math.floor(score) % 50 === 0 && Math.floor(score) !== 0) {
       createAsteroid(1, false);
       createStar();
       createShield();
       score++;
-    } else {
+    }
+     else {
       score += 0.01 * deltat;
     }
   }
@@ -497,6 +515,9 @@ function updateScore(deltat) {
 function resetGame() {
   //Change the game status to true
   game_status = true;
+  music.volume = 0.2;
+  music.loop = true;
+  music.play();
 
   //Reset score to 0
   score = 0;
@@ -672,4 +693,7 @@ function smokeParticles() {
   );
   listSmoke.push(smoke);
   scene.add(smoke.particleObjects);
+  // setTimeout(() => {
+  //   scene.remove(smoke.particleObjects);
+  // }, 2000);
 }

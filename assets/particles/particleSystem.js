@@ -116,7 +116,7 @@ class ParticleSystem {
     }
     this.material.opacity -= (deltaT * 0.001) / this.lifeSpan;
 
-    if (this.material.opacity <= 0) this.material.opacity = 1.0;
+    // if (this.material.opacity <= 0) this.material.opacity = 1.0;
 
     positions.needsUpdate = true;
   }
