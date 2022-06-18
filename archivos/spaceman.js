@@ -23,8 +23,10 @@ let renderer = null,
   objShip = null,
   objAsteroid = null,
   objStar = null,
+  objShield = null,
   listAsteroid = [],
   listPowerUp = [],
+  listShield = [],
   listSmoke = [],
   aspectRatio = null,
   fieldOfView = null,
@@ -65,13 +67,18 @@ let objModelEarth = {
     mtl: "../assets/objects/Asteroid/asteroid.mtl",
   },
   objModelStar = {
-    obj: "../assets/objects/PowerUp/power_up.obj",
-    mtl: "../assets/objects/PowerUp/power_up.mtl",
+    obj: "../assets/objects/PowerUp/Star/power_up.obj",
+    mtl: "../assets/objects/PowerUp/Star/power_up.mtl",
+  },
+  objModelShield = {
+    obj: "../assets/objects/PowerUp/Shield/shield.obj",
+    mtl: "../assets/objects/PowerUp/Shield/shield.mtl",
   };
 
 //Score variables
 let div_score = null,
   score = 0,
+  shielded = false,
   lifes = 3;
 
 function main() {
@@ -136,7 +143,7 @@ async function createShip() {
     [0, -1.5, 0]
   );
 
-  shipBoxHelper = new THREE.BoxHelper(objShip, 0x00ff00);
+  shipBoxHelper = new THREE.BoxHelper(objShip, 0x00FFFF);
   shipBoxHelper.visible = false;
   shipBoxHelper.update();
   scene.add(shipBoxHelper);
@@ -147,7 +154,7 @@ async function createShip() {
 }
 
 // Function to create PowerUp
-async function createPowerUp() {
+async function createStar() {
   let x = 0,
     y = 0;
 
@@ -179,6 +186,40 @@ async function createPowerUp() {
 
   //Add Asteroids to its group
   asteroidsGroup.add(objStar);
+}
+
+async function createShield() {
+  let x = 0,
+    y = 0;
+
+  let radius = genRand(11, 14.5, 2);
+  let angle = Math.random() * Math.PI * 2;
+  x = Math.cos(angle) * radius;
+  y = Math.sin(angle) * radius;
+
+  objShield = await loadObjMtl(
+    objModelShield,
+    [x, y, 0],
+    [0.1, 0.1, 0.1],
+    [0, 0, 0]
+  );
+
+  //Save the angle to change the position later
+  objShield.angle = angle;
+
+  listShield.push(objShield);
+
+  powerupBoxHelper = new THREE.BoxHelper(objShield, 0x00ff00);
+  powerupBoxHelper.visible = false;
+  powerupBoxHelper.update();
+
+  scene.add(powerupBoxHelper);
+
+  //Add Box helpers to the list
+  lstBoxHelpers.push(powerupBoxHelper);
+
+  //Add Asteroids to its group
+  asteroidsGroup.add(objShield);
 }
 
 // Function to create the Asteroid
@@ -366,30 +407,44 @@ function checkCollisions() {
     for (let i = 0; i < listAsteroid.length; i++) {
       let asteroidBox = new THREE.Box3().setFromObject(listAsteroid[i]);
 
-      if (asteroidBox.intersectsBox(shipBox)) {
+      if (asteroidBox.intersectsBox(shipBox) && !shielded) {
         lstBoxHelpers[i].material.color = new THREE.Color("red");
         asteroidsGroup.remove(listAsteroid[i]);
         // lstBoxHelpers[i].visible = false;
         lifes--;
         isCollision = true;
         updateLifes();
-        //smokeParticles();
+        smokeParticles();
       } else {
         lstBoxHelpers[i].material.color = new THREE.Color("green");
       }
     }
   }
-
   if (listPowerUp.length > 0) {
     for (let i = 0; i < listPowerUp.length; i++) {
       let powerUpBox = new THREE.Box3().setFromObject(listPowerUp[i]);
 
       if (powerUpBox.intersectsBox(shipBox)) {
+        console.log(powerUpBox);
         if (lifes < 3) {
           lifes++;
           asteroidsGroup.remove(listPowerUp[i]);
           updateLifes();
         }
+      }
+    }
+  }
+  if (listShield.length > 0) {
+    for (let i = 0; i < listShield.length; i++) {
+      let powerUpBox = new THREE.Box3().setFromObject(listShield[i]);
+      if (powerUpBox.intersectsBox(shipBox)) {
+          shipBoxHelper.visible = true;
+          shielded = true;
+          setTimeout(() => {
+            shipBoxHelper.visible = false;
+            shielded = false;
+          }, 5000);
+          asteroidsGroup.remove(listShield[i]);
       }
     }
   }
@@ -429,7 +484,8 @@ function updateScore(deltat) {
     div_score.innerHTML = `Score: ${Math.floor(score)}`;
     if (Math.floor(score) % 50 === 0 && Math.floor(score) !== 0) {
       createAsteroid(1, false);
-      createPowerUp();
+      createStar();
+      createShield();
       score++;
     } else {
       score += 0.01 * deltat;
@@ -460,6 +516,11 @@ function resetGame() {
   if (listPowerUp.length > 0) {
     for (let i = 0; i < listPowerUp.length; i++) {
       asteroidsGroup.remove(listPowerUp[i]);
+    }
+  }
+  if (listShield.length > 0) {
+    for (let i = 0; i < listShield.length; i++) {
+      asteroidsGroup.remove(listShield[i]);
     }
   }
 }
