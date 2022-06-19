@@ -508,8 +508,6 @@ function updateScore(deltat) {
     }
     if (Math.floor(score) % 50 === 0 && Math.floor(score) !== 0) {
       createAsteroid(1, false);
-      createStar();
-      createShield();
       score++;
     }
      else {
