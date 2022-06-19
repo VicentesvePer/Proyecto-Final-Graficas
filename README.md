@@ -18,8 +18,8 @@
 - [x] Escena Base
 - [x] Texturas, Audio y assets power ups
 
-### UI
-## Paleta de colores
-![Paleta de colores](https://github.com/Vicentesve/Proyecto-Final-Graficas/blob/main/assets/images/paleta_colores.png)
-## Fuente utilizada
-* [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P?query=star&preview.text=THE%20SPACEMAN&preview.text_type=custom)
+## UI
+  ### Paleta de colores
+  ![Paleta de colores](https://github.com/Vicentesve/Proyecto-Final-Graficas/blob/main/assets/images/paleta_colores.png)
+  ### Fuente utilizada
+  * [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P?query=star&preview.text=THE%20SPACEMAN&preview.text_type=custom)
