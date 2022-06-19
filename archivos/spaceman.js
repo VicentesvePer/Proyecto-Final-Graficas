@@ -8,8 +8,6 @@ import {
   ParticleSystem,
 } from "../assets/particles/particleSystem.js";
 
-const { System } = window.Nebula;
-
 //General variables
 let game_status = false;
 
@@ -351,6 +349,7 @@ function moveShip(angleShip) {
       let moveInX = normalize(mousePos.x, -2, 1, -10, 3);
       shipGroup.position.y += (moveInY - shipGroup.position.y) * 0.2;
       shipGroup.position.x += (moveInX - shipGroup.position.x) * 0.2;
+      shipGroup.position.z = 20
 
       if (objShip !== null) {
         if (isCollision == true) {
@@ -365,6 +364,14 @@ function moveShip(angleShip) {
         }
       }
     }
+  }
+  if (lifes === 0) {
+    shipGroup.position.y -= 0.02
+    shipGroup.position.x += 0.01
+    shipGroup.position.z += 0.01
+
+    objShip.rotation.z -= 0.01
+    shielded = true
   }
 }
 
@@ -526,6 +533,9 @@ function resetGame() {
   lifes = 3;
   updateLifes();
 
+  objShip.rotation.z = -1.5
+  shielded = false
+
   //Clear all asteroids from scene
   if (listAsteroid.length > 0) {
     for (let i = 0; i < listAsteroid.length; i++) {
@@ -613,7 +623,7 @@ async function createScene(canvas) {
   //Set background
   //scene.background = new THREE.Color("rgb(65, 61, 68)");
   const loader = new THREE.TextureLoader();
-  loader.load("../assets/textures/cartoon_space3.jpg", function (texture) {
+  loader.load("../assets/textures/cartoon_space.jpg", function (texture) {
     scene.background = texture;
   });
 
