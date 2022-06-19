@@ -3,7 +3,8 @@
 
 ## Descripción del proyecto
 
-* Una página web en la que se presentará un mini juego de destreza. El proyecto esta diseñado utilizando modelos 3D mediante la herramienta WebGL y consiste de una nave en el espacio, en el que tendra que esquivar asteroides para incrementar su puntuación mientras recolecta herramaientas para recuperar la salud de la nave. 
+* Una página web en la que se presentará un mini juego de destreza. El proyecto esta diseñado utilizando modelos 3D mediante la herramienta [WebGL](https://get.webgl.org/) y [Three.js](https://threejs.org/). 
+* El juego consiste de una nave en el espacio, en el queel usuario tendrá que esquivar asteroides para incrementar su puntuación mientras recolecta herramaientas para recuperar la salud de la nave o escudos para volverse inmune a los asteroides. 
 
 ## Requerimientos 
 - [x]	Movimiento (jugador o mundo)
