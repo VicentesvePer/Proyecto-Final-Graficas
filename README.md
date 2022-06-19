@@ -13,9 +13,9 @@
 - [ ]	Sistema de puntuación
 - [ ]	Diseño de jugador
 
-- [] UI
-- [] Escena Base
-- [] Texturas, Audio y assets power ups
+- [ ] UI
+- [ ] Escena Base
+- [ ] Texturas, Audio y assets power ups
 
 ## UI
 ### Posibles fuentes
